@@ -1,9 +1,16 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { AuthenticatedUser } from '../strategies/jwt.strategy';
+import type { AuthenticatedUser } from '../strategies/jwt.strategy';
 
 export const CurrentUser = createParamDecorator(
-  (_: unknown, ctx: ExecutionContext): AuthenticatedUser => {
-    const request = ctx.switchToHttp().getRequest();
+  (_data: unknown, ctx: ExecutionContext): AuthenticatedUser => {
+    const request = ctx
+      .switchToHttp()
+      .getRequest<{ user?: AuthenticatedUser }>();
+
+    if (!request.user) {
+      throw new Error('User not authenticated');
+    }
+
     return request.user;
   },
 );
