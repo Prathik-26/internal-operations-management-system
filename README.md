@@ -4,9 +4,9 @@ Role-based internal system for managing requests, approvals, and operational wor
 
 ## Tech Stack
 
-Backend: NestJS
-Frontend: React
-Database: MySQL
+Backend: NestJS  
+Frontend: React  
+Database: MySQL  
 
 ## Status
 
