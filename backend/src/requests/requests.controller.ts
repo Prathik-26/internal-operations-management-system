@@ -6,10 +6,12 @@ import {
   Get,
   Param,
   Patch,
+  Query,
 } from '@nestjs/common';
 
 import { RequestsService } from './requests.service';
 import { CreateRequestDto } from './dto/create-request.dto';
+import { QueryRequestsDto } from './dto/query-requests.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -40,8 +42,8 @@ export class RequestsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MANAGER)
   @Get()
-  allRequests() {
-    return this.requestsService.findAll();
+  allRequests(@Query() query: QueryRequestsDto) {
+    return this.requestsService.findAll(query);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

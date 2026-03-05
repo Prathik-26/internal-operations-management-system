@@ -3,6 +3,8 @@ import { RequestItem } from './interfaces/request.interface';
 import { RequestStatus } from './enums/request-status.enum';
 import { randomUUID } from 'crypto';
 import { CreateRequestDto } from './dto/create-request.dto';
+import { QueryRequestsDto } from './dto/query-requests.dto';
+import { PaginatedResult } from './interfaces/paginated-result.interface';
 import { AuditService } from '../audit/audit.service';
 
 @Injectable()
@@ -31,8 +33,27 @@ export class RequestsService {
     return this.requests.filter((r) => r.createdBy === userId);
   }
 
-  findAll(): RequestItem[] {
-    return this.requests;
+  findAll(query: QueryRequestsDto): PaginatedResult<RequestItem> {
+    let filtered = this.requests;
+
+    if (query.status) {
+      filtered = filtered.filter((r) => r.status === query.status);
+    }
+
+    const total = filtered.length;
+    const lastPage = Math.ceil(total / query.limit);
+    const start = (query.page - 1) * query.limit;
+    const data = filtered.slice(start, start + query.limit);
+
+    return {
+      data,
+      meta: {
+        total,
+        page: query.page,
+        limit: query.limit,
+        lastPage,
+      },
+    };
   }
 
   updateStatus(
