@@ -4,12 +4,13 @@ import { hashPassword } from '../auth/utils/hash.util';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './interfaces/user.interface';
 import { randomUUID } from 'crypto';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class UsersService {
   private users: User[] = [];
 
-  constructor() {
+  constructor(private auditService: AuditService) {
     void this.seedAdmin();
   }
 
@@ -46,6 +47,7 @@ export class UsersService {
     };
 
     this.users.push(user);
+    this.auditService.log('USER_CREATED', 'admin', user.id);
     return user;
   }
 }

@@ -47,14 +47,22 @@ export class RequestsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MANAGER)
   @Patch(':id/approve')
-  approve(@Param('id') id: string) {
-    return this.requestsService.updateStatus(id, RequestStatus.APPROVED);
+  approve(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.requestsService.updateStatus(
+      id,
+      RequestStatus.APPROVED,
+      user.userId,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MANAGER)
   @Patch(':id/reject')
-  reject(@Param('id') id: string) {
-    return this.requestsService.updateStatus(id, RequestStatus.REJECTED);
+  reject(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.requestsService.updateStatus(
+      id,
+      RequestStatus.REJECTED,
+      user.userId,
+    );
   }
 }
