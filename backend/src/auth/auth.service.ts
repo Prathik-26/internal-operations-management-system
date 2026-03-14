@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { comparePassword } from './utils/hash.util';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '../users/interfaces/user.interface';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -12,7 +12,7 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string): Promise<User> {
-    const user = this.usersService.findByEmail(email);
+    const user = await this.usersService.findByEmail(email);
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
     const isMatch = await comparePassword(password, user.passwordHash);
