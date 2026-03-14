@@ -1,53 +1,54 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, OnModuleInit } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entities/user.entity';
 import { Role } from './enums/role.enum';
 import { hashPassword } from '../auth/utils/hash.util';
 import { CreateUserDto } from './dto/create-user.dto';
-import { User } from './interfaces/user.interface';
-import { randomUUID } from 'crypto';
 import { AuditService } from '../audit/audit.service';
 
 @Injectable()
-export class UsersService {
-  private users: User[] = [];
+export class UsersService implements OnModuleInit {
+  constructor(
+    @InjectRepository(User)
+    private userRepo: Repository<User>,
+    private auditService: AuditService,
+  ) {}
 
-  constructor(private auditService: AuditService) {
-    void this.seedAdmin();
-  }
-
-  async seedAdmin(): Promise<void> {
-    const password = await hashPassword('password123');
-
-    this.users.push({
-      id: '1',
-      email: 'admin@test.com',
-      passwordHash: password,
-      role: Role.ADMIN,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+  async onModuleInit(): Promise<void> {
+    const existing = await this.userRepo.findOne({
+      where: { email: 'admin@test.com' },
     });
+
+    if (!existing) {
+      const passwordHash = await hashPassword('password123');
+      const admin = this.userRepo.create({
+        email: 'admin@test.com',
+        passwordHash,
+        role: Role.ADMIN,
+      });
+      await this.userRepo.save(admin);
+    }
   }
 
-  findByEmail(email: string): User | undefined {
-    return this.users.find((u) => u.email === email);
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userRepo.findOne({ where: { email } });
   }
 
   async create(dto: CreateUserDto): Promise<User> {
-    const exists = this.findByEmail(dto.email);
+    const exists = await this.findByEmail(dto.email);
     if (exists) throw new ConflictException('Email already exists');
 
-    const hashed = await hashPassword(dto.password);
+    const passwordHash = await hashPassword(dto.password);
 
-    const user: User = {
-      id: randomUUID(),
+    const user = this.userRepo.create({
       email: dto.email,
-      passwordHash: hashed,
+      passwordHash,
       role: dto.role,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    });
 
-    this.users.push(user);
-    this.auditService.log('USER_CREATED', 'admin', user.id);
-    return user;
+    const saved = await this.userRepo.save(user);
+    this.auditService.log('USER_CREATED', 'admin', saved.id);
+    return saved;
   }
 }

@@ -26,7 +26,7 @@ export class RequestsController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(
+  async create(
     @Body() dto: CreateRequestDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
@@ -35,21 +35,24 @@ export class RequestsController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  myRequests(@CurrentUser() user: AuthenticatedUser) {
+  async myRequests(@CurrentUser() user: AuthenticatedUser) {
     return this.requestsService.findOwn(user.userId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MANAGER)
   @Get()
-  allRequests(@Query() query: QueryRequestsDto) {
+  async allRequests(@Query() query: QueryRequestsDto) {
     return this.requestsService.findAll(query);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MANAGER)
   @Patch(':id/approve')
-  approve(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+  async approve(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     return this.requestsService.updateStatus(
       id,
       RequestStatus.APPROVED,
@@ -60,7 +63,10 @@ export class RequestsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MANAGER)
   @Patch(':id/reject')
-  reject(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+  async reject(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     return this.requestsService.updateStatus(
       id,
       RequestStatus.REJECTED,

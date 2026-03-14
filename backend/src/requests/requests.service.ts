@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { RequestItem } from './interfaces/request.interface';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Request } from './entities/request.entity';
 import { RequestStatus } from './enums/request-status.enum';
-import { randomUUID } from 'crypto';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { QueryRequestsDto } from './dto/query-requests.dto';
 import { PaginatedResult } from './interfaces/paginated-result.interface';
@@ -9,41 +10,42 @@ import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class RequestsService {
-  private requests: RequestItem[] = [];
+  constructor(
+    @InjectRepository(Request)
+    private requestRepo: Repository<Request>,
+    private auditService: AuditService,
+  ) {}
 
-  constructor(private auditService: AuditService) {}
-
-  create(dto: CreateRequestDto, userId: string): RequestItem {
-    const request: RequestItem = {
-      id: randomUUID(),
+  async create(dto: CreateRequestDto, userId: string): Promise<Request> {
+    const request = this.requestRepo.create({
       title: dto.title,
       description: dto.description,
       status: RequestStatus.SUBMITTED,
-      createdBy: userId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+      createdById: userId,
+    });
 
-    this.requests.push(request);
-    this.auditService.log('REQUEST_CREATED', userId, request.id);
-    return request;
+    const saved = await this.requestRepo.save(request);
+    this.auditService.log('REQUEST_CREATED', userId, saved.id);
+    return saved;
   }
 
-  findOwn(userId: string): RequestItem[] {
-    return this.requests.filter((r) => r.createdBy === userId);
+  async findOwn(userId: string): Promise<Request[]> {
+    return this.requestRepo.find({ where: { createdById: userId } });
   }
 
-  findAll(query: QueryRequestsDto): PaginatedResult<RequestItem> {
-    let filtered = this.requests;
+  async findAll(query: QueryRequestsDto): Promise<PaginatedResult<Request>> {
+    const qb = this.requestRepo.createQueryBuilder('request');
 
     if (query.status) {
-      filtered = filtered.filter((r) => r.status === query.status);
+      qb.where('request.status = :status', { status: query.status });
     }
 
-    const total = filtered.length;
+    const total = await qb.getCount();
     const lastPage = Math.ceil(total / query.limit);
-    const start = (query.page - 1) * query.limit;
-    const data = filtered.slice(start, start + query.limit);
+
+    qb.skip((query.page - 1) * query.limit).take(query.limit);
+
+    const data = await qb.getMany();
 
     return {
       data,
@@ -56,18 +58,18 @@ export class RequestsService {
     };
   }
 
-  updateStatus(
+  async updateStatus(
     id: string,
     status: RequestStatus,
     performedBy: string,
-  ): RequestItem {
-    const req = this.requests.find((r) => r.id === id);
+  ): Promise<Request> {
+    const req = await this.requestRepo.findOne({ where: { id } });
     if (!req) throw new NotFoundException('Request not found');
 
     req.status = status;
-    req.updatedAt = new Date();
+    const saved = await this.requestRepo.save(req);
     this.auditService.log(`REQUEST_${status.toUpperCase()}`, performedBy, id);
 
-    return req;
+    return saved;
   }
 }
