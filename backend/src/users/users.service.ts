@@ -35,6 +35,17 @@ export class UsersService implements OnModuleInit {
     return this.userRepo.findOne({ where: { email } });
   }
 
+  async findById(id: string): Promise<User | null> {
+    return this.userRepo.findOne({ where: { id } });
+  }
+
+  async updateRefreshToken(
+    userId: string,
+    refreshTokenHash: string | null,
+  ): Promise<void> {
+    await this.userRepo.update(userId, { refreshTokenHash });
+  }
+
   async create(dto: CreateUserDto): Promise<User> {
     const exists = await this.findByEmail(dto.email);
     if (exists) throw new ConflictException('Email already exists');

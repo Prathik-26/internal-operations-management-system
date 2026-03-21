@@ -21,6 +21,9 @@ export class User {
   @Column({ type: 'enum', enum: Role, default: Role.STAFF })
   role: Role;
 
+  @Column({ nullable: true, type: 'text' })
+  refreshTokenHash: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
