@@ -48,7 +48,10 @@ export class UsersService implements OnModuleInit {
 
   async create(dto: CreateUserDto): Promise<User> {
     const exists = await this.findByEmail(dto.email);
-    if (exists) throw new ConflictException('Email already exists');
+    if (exists)
+      throw new ConflictException(
+        'A user with this email already exists. Please use a different email address',
+      );
 
     const passwordHash = await hashPassword(dto.password);
 

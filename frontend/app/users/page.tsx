@@ -47,8 +47,20 @@ export default function UsersPage() {
       setPassword("");
       setRole("staff");
       void fetchUsers();
-    } catch {
-      setError("Failed to create user. Email may already exist.");
+    } catch (err: unknown) {
+      const msg =
+        err &&
+        typeof err === "object" &&
+        "response" in err &&
+        err.response &&
+        typeof err.response === "object" &&
+        "data" in err.response &&
+        err.response.data &&
+        typeof err.response.data === "object" &&
+        "message" in err.response.data
+          ? String(err.response.data.message)
+          : "Failed to create user. Please try again";
+      setError(msg);
     } finally {
       setSubmitting(false);
     }

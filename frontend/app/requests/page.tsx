@@ -53,16 +53,47 @@ export default function RequestsPage() {
       setTitle("");
       setDescription("");
       void fetchRequests();
-    } catch {
-      setError("Failed to submit request");
+    } catch (err: unknown) {
+      const msg =
+        err &&
+        typeof err === "object" &&
+        "response" in err &&
+        err.response &&
+        typeof err.response === "object" &&
+        "data" in err.response &&
+        err.response.data &&
+        typeof err.response.data === "object" &&
+        "message" in err.response.data
+          ? String(err.response.data.message)
+          : "Failed to submit request. Please try again";
+      setError(msg);
     } finally {
       setSubmitting(false);
     }
   };
 
+  const [actionError, setActionError] = useState("");
+
   const handleAction = async (id: string, action: "approve" | "reject") => {
-    await api.patch(`/requests/${id}/${action}`);
-    void fetchRequests();
+    setActionError("");
+    try {
+      await api.patch(`/requests/${id}/${action}`);
+      void fetchRequests();
+    } catch (err: unknown) {
+      const msg =
+        err &&
+        typeof err === "object" &&
+        "response" in err &&
+        err.response &&
+        typeof err.response === "object" &&
+        "data" in err.response &&
+        err.response.data &&
+        typeof err.response.data === "object" &&
+        "message" in err.response.data
+          ? String(err.response.data.message)
+          : `Failed to ${action} request. Please try again`;
+      setActionError(msg);
+    }
   };
 
   const statusConfig: Record<string, { bg: string; text: string; dot: string }> = {
@@ -78,6 +109,15 @@ export default function RequestsPage() {
       <h1 className="text-2xl font-bold text-slate-900 mb-6">
         {isManagerOrAdmin ? "All Requests" : "My Requests"}
       </h1>
+
+      {actionError && (
+        <div className="flex items-center gap-2.5 bg-red-50 border border-red-200/80 text-red-600 text-sm px-4 py-3 rounded-xl mb-4 animate-fade-in">
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {actionError}
+        </div>
+      )}
 
       {/* Submit form */}
       <div className="bg-white border border-slate-200/80 rounded-xl p-6 mb-6 shadow-sm">

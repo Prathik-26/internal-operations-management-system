@@ -1,4 +1,8 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import {
+  createParamDecorator,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { AuthenticatedUser } from '../strategies/jwt.strategy';
 
 export const CurrentUser = createParamDecorator(
@@ -8,7 +12,9 @@ export const CurrentUser = createParamDecorator(
       .getRequest<{ user?: AuthenticatedUser }>();
 
     if (!request.user) {
-      throw new Error('User not authenticated');
+      throw new UnauthorizedException(
+        'Your session is invalid. Please sign in again',
+      );
     }
 
     return request.user;

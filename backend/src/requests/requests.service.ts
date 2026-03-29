@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Request } from './entities/request.entity';
@@ -64,7 +68,15 @@ export class RequestsService {
     performedBy: string,
   ): Promise<Request> {
     const req = await this.requestRepo.findOne({ where: { id } });
-    if (!req) throw new NotFoundException('Request not found');
+    if (!req)
+      throw new NotFoundException(
+        'This request no longer exists. It may have been deleted',
+      );
+
+    if (req.status !== RequestStatus.SUBMITTED)
+      throw new BadRequestException(
+        `This request has already been ${req.status}. Only pending requests can be updated`,
+      );
 
     req.status = status;
     const saved = await this.requestRepo.save(req);

@@ -28,11 +28,15 @@ export class RolesGuard implements CanActivate {
     const user = request.user;
 
     if (!user) {
-      throw new ForbiddenException('User not authenticated');
+      throw new ForbiddenException(
+        'You must be signed in to access this resource',
+      );
     }
 
     if (!requiredRoles.includes(user.role)) {
-      throw new ForbiddenException('Insufficient permissions');
+      throw new ForbiddenException(
+        `This action requires one of the following roles: ${requiredRoles.join(', ')}. Your current role is "${user.role}"`,
+      );
     }
 
     return true;

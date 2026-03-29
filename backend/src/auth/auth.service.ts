@@ -15,10 +15,16 @@ export class AuthService {
 
   async validateUser(email: string, password: string): Promise<User> {
     const user = await this.usersService.findByEmail(email);
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+    if (!user)
+      throw new UnauthorizedException(
+        'No account found with this email address',
+      );
 
     const isMatch = await comparePassword(password, user.passwordHash);
-    if (!isMatch) throw new UnauthorizedException('Invalid credentials');
+    if (!isMatch)
+      throw new UnauthorizedException(
+        'Incorrect password. Please try again or contact your admin to reset it',
+      );
 
     return user;
   }
@@ -50,11 +56,16 @@ export class AuthService {
     const user = await this.usersService.findById(userId);
 
     if (!user || !user.refreshTokenHash) {
-      throw new UnauthorizedException('Access denied');
+      throw new UnauthorizedException(
+        'Your session has expired. Please sign in again',
+      );
     }
 
     const isMatch = await comparePassword(refreshToken, user.refreshTokenHash);
-    if (!isMatch) throw new UnauthorizedException('Access denied');
+    if (!isMatch)
+      throw new UnauthorizedException(
+        'Your session is no longer valid. Please sign in again',
+      );
 
     const payload = { sub: user.id, role: user.role };
     const accessToken = this.jwtService.sign(payload);

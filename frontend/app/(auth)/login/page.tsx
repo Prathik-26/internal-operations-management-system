@@ -58,8 +58,20 @@ export default function LoginPage() {
 
       login(data.accessToken, data.refreshToken);
       router.push("/dashboard");
-    } catch {
-      setError("Invalid email or password");
+    } catch (err: unknown) {
+      const msg =
+        err &&
+        typeof err === "object" &&
+        "response" in err &&
+        err.response &&
+        typeof err.response === "object" &&
+        "data" in err.response &&
+        err.response.data &&
+        typeof err.response.data === "object" &&
+        "message" in err.response.data
+          ? String(err.response.data.message)
+          : "Something went wrong. Please try again";
+      setError(msg);
     } finally {
       setLoading(false);
     }

@@ -31,7 +31,10 @@ export class JwtRefreshStrategy extends PassportStrategy(
 
   validate(req: Request, payload: JwtPayload): RefreshAuthenticatedUser {
     const authHeader = req.get('Authorization');
-    if (!authHeader) throw new UnauthorizedException();
+    if (!authHeader)
+      throw new UnauthorizedException(
+        'Refresh token is missing. Please sign in again',
+      );
 
     const refreshToken = authHeader.replace('Bearer', '').trim();
 
