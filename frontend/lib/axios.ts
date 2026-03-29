@@ -1,13 +1,17 @@
 import axios from "axios";
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000",
+  baseURL: BASE_URL,
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
 });
@@ -17,29 +21,42 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config;
 
-    if (error.response?.status === 401 && !original._retry) {
+    const isRefreshCall = original?.url?.includes("/auth/refresh");
+    const is401 = error.response?.status === 401;
+
+    if (is401 && !original._retry && !isRefreshCall) {
       original._retry = true;
 
-      const refreshToken = localStorage.getItem("refreshToken");
+      const refreshToken =
+        typeof window !== "undefined"
+          ? localStorage.getItem("refreshToken")
+          : null;
+
       if (!refreshToken) {
-        localStorage.clear();
-        window.location.href = "/login";
+        if (typeof window !== "undefined") {
+          localStorage.clear();
+          window.location.href = "/login";
+        }
         return Promise.reject(error);
       }
 
       try {
         const { data } = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000"}/auth/refresh`,
+          `${BASE_URL}/auth/refresh`,
           {},
-          { headers: { Authorization: `Bearer ${refreshToken}` } },
+          {
+            headers: { Authorization: `Bearer ${refreshToken}` },
+          },
         );
 
         localStorage.setItem("accessToken", data.accessToken);
         original.headers.Authorization = `Bearer ${data.accessToken}`;
         return api(original);
       } catch {
-        localStorage.clear();
-        window.location.href = "/login";
+        if (typeof window !== "undefined") {
+          localStorage.clear();
+          window.location.href = "/login";
+        }
         return Promise.reject(error);
       }
     }

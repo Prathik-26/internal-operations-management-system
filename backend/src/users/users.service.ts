@@ -62,4 +62,11 @@ export class UsersService implements OnModuleInit {
     this.auditService.log('USER_CREATED', 'admin', saved.id);
     return saved;
   }
+
+  async findAll(): Promise<User[]> {
+    return this.userRepo.find({
+      select: ['id', 'email', 'role', 'createdAt', 'updatedAt'],
+      order: { createdAt: 'DESC' },
+    });
+  }
 }
