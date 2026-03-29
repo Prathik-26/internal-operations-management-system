@@ -31,7 +31,7 @@ import { LoggingInterceptor } from './common/logging.interceptor';
         password: config.get<string>('database.password'),
         database: config.get<string>('database.name'),
         autoLoadEntities: true,
-        synchronize: true,
+        synchronize: process.env.NODE_ENV !== 'production',
       }),
     }),
     CommonModule,
