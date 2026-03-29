@@ -31,6 +31,7 @@ and access is strictly controlled by role.
 
 | Layer      | Technology                          |
 | ---------- | ----------------------------------- |
+| Frontend   | Next.js + TypeScript + Tailwind CSS |
 | Backend    | NestJS + TypeScript                 |
 | Database   | MySQL + TypeORM                     |
 | Auth       | JWT + Passport                      |
@@ -126,6 +127,13 @@ npm run start:dev
 ```
 Email:    admin@test.com
 Password: password123
+```
+
+## Live Demo
+
+```
+Frontend: https://oms-two-sigma.vercel.app
+Backend API: https://internal-operations-management-system-production.up.railway.app
 ```
 
 ---
